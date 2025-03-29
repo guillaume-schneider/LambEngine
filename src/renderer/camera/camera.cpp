@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL2/SDL.h>
 
+
 void Camera::computeCursorCameraMovements(int x, int y) {
     yaw += x * m_mouseSensitivity;
     pitch -= y * m_mouseSensitivity;

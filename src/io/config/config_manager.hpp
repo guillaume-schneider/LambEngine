@@ -28,17 +28,7 @@ private:
     ConfigurationManager(const ConfigurationManager&) = delete;
     ConfigurationManager& operator=(const ConfigurationManager) = delete;
 
-    json parseJSON(const std::string& path) {
-        std::ifstream inputFile(path);
-        if (!inputFile.is_open()) {
-            std::cerr << "Error opening file: " << path << std::endl;
-            return nullptr;
-         }
-
-        json buffer;
-        inputFile >> buffer;
-        return buffer;
-    }
+    json parseJSON(const std::string& path);
 
     ConfigurationManager() {
         m_config = parseJSON(m_config_path);
