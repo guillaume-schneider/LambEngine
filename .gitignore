@@ -2,3 +2,4 @@
 /.vscode
 CMakeUserPresets.json
 test_imgui.cpp
+engine.log

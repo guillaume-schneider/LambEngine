@@ -134,7 +134,7 @@ public:
      * @return true if the application should stop.
      * @return false if the application should continue running.
      */
-    bool shouldStop() const { return m_running; }
+    bool shouldStop() const { return !m_running; }
 
 private:
     static InputSystem* instance;
