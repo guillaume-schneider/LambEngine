@@ -31,11 +31,15 @@ void GLAPIENTRY openglDebugCallback(GLenum source,
               << ", message = " << message << std::endl;
 }
 
-void Engine::initSDL(const EngineConfig& cfg) {
+void Engine::initSDL(const EngineConfig& cfg)
+{
+    Logger::Log(LogLevel::Info, "Initializing SDL...", "Engine");
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
-        return;
+        Logger::Log(LogLevel::Error,
+            std::string("Failed to initialize SDL: ") + SDL_GetError(), "Engine");
+        throw std::runtime_error("SDL_Init failed");
     }
 
 #ifdef DEBUG
@@ -48,103 +52,132 @@ void Engine::initSDL(const EngineConfig& cfg) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 
     m_Window = SDL_CreateWindow(
-        cfg.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        cfg.title.c_str(),
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         cfg.width, cfg.height,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+    );
     if (!m_Window)
     {
-        std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
-        return;
+        Logger::Log(LogLevel::Error,
+            std::string("Failed to create window: ") + SDL_GetError(), "Engine");
+        SDL_Quit();
+        throw std::runtime_error("SDL_CreateWindow failed");
     }
 
     m_Context = SDL_GL_CreateContext(m_Window);
     if (!m_Context)
     {
-        std::cerr << "Failed to create OpenGL context: " << SDL_GetError()
-                  << std::endl;
+        Logger::Log(LogLevel::Error,
+            std::string("Failed to create OpenGL context: ") + SDL_GetError(), "Engine");
         SDL_DestroyWindow(m_Window);
         SDL_Quit();
-        return;
+        throw std::runtime_error("SDL_GL_CreateContext failed");
     }
 
     if (SDL_GL_MakeCurrent(m_Window, m_Context) != 0)
     {
-        std::cerr << "SDL_GL_MakeCurrent::ERROR::" << SDL_GetError() << std::endl;
+        Logger::Log(LogLevel::Error,
+            std::string("SDL_GL_MakeCurrent error: ") + SDL_GetError(), "Engine");
         SDL_GL_DeleteContext(m_Context);
         SDL_DestroyWindow(m_Window);
         SDL_Quit();
-        return;
+        throw std::runtime_error("SDL_GL_MakeCurrent failed");
     }
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
     {
-        std::cerr << "Failed to initialize OpenGL context" << std::endl;
+        Logger::Log(LogLevel::Error,
+            "Failed to initialize OpenGL context with gladLoadGLLoader", "Engine");
         SDL_GL_DeleteContext(m_Context);
         SDL_DestroyWindow(m_Window);
         SDL_Quit();
-        return;
+        throw std::runtime_error("gladLoadGLLoader failed");
     }
 
 #ifdef VSYNC
     SDL_GL_SetSwapInterval(1);
+    Logger::Log(LogLevel::Info, "VSYNC enabled (SDL_GL_SetSwapInterval(1))", "Engine");
+#else
+    Logger::Log(LogLevel::Info, "VSYNC disabled", "Engine");
 #endif
 
-};
+    Logger::Log(LogLevel::Info, "SDL initialization successful.", "Engine");
+}
 
 
-void Engine::initOpenGL() {
-    #ifdef DEBUG
+
+void Engine::initOpenGL()
+{
+    Logger::Log(LogLevel::Info, "Initializing OpenGL state...", "Engine");
+
+#ifdef DEBUG
     if (gladLoadGL())
-    { // Ensure GLAD loaded OpenGL
+    {
         GLint flags;
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
         if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-        { // Check if debug context is active
-            std::cout << "GL_CONTEXT::DEBUG::ACTIVATED" << std::endl;
+        {
+            Logger::Log(LogLevel::Info, "GL_CONTEXT::DEBUG::ACTIVATED", "Engine");
             glEnable(GL_DEBUG_OUTPUT);
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             glDebugMessageCallback(openglDebugCallback, nullptr);
-            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE,
+                                  GL_DONT_CARE, 0, nullptr, GL_TRUE);
         }
     }
     else
     {
-        std::cerr << "Failed to initialize GLAD!" << std::endl;
+        Logger::Log(LogLevel::Error, "Failed to initialize GLAD in initOpenGL()", "Engine");
     }
 #endif
 
     const GLubyte *version = glGetString(GL_VERSION);
     if (version)
     {
-        std::cout << "OpenGL Version: " << version << std::endl;
+        Logger::Log(
+            LogLevel::Info,
+            std::string("OpenGL Version: ") +
+                reinterpret_cast<const char*>(version), "Engine");
     }
     else
     {
-        std::cerr << "Unable to retrieve OpenGL version." << std::endl;
+        Logger::Log(LogLevel::Warning, "Unable to retrieve OpenGL version.", "Engine");
     }
 
     int currentWindowWidth, currentWindowHeight;
     SDL_GetWindowSize(m_Window, &currentWindowWidth, &currentWindowHeight);
-    float currrentWindowRatio = static_cast<float>(currentWindowWidth) / currentWindowHeight;
+    m_AspectRatio = static_cast<float>(currentWindowWidth) /
+                    static_cast<float>(currentWindowHeight);
 
     glViewport(0, 0, currentWindowWidth, currentWindowHeight);
+
+    Logger::Log(
+        LogLevel::Info,
+        "OpenGL viewport initialized: " +
+            std::to_string(currentWindowWidth) + "x" +
+            std::to_string(currentWindowHeight), "Engine");
 }
 
-void Engine::initImGui() {
+void Engine::initImGui()
+{
+    Logger::Log(LogLevel::Info, "Initializing ImGui...", "Engine");
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
     ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
 
     ImGui_ImplSDL2_InitForOpenGL(m_Window, m_Context);
     ImGui_ImplOpenGL3_Init();
+
+    Logger::Log(LogLevel::Info, "ImGui initialization successful.", "Engine");
 }
 
 
@@ -171,13 +204,12 @@ Engine::Engine(const EngineConfig& cfg) {
 void Engine::Run(IGame* game)
 {
     if (!game) {
-        Logger::Log(LogLevel::Error, "Engine::Run received null IGame.");
+        Logger::Log(LogLevel::Error, "Engine::Run received null IGame.", "Engine");
         throw std::runtime_error("Engine::Run received null IGame.");
     }
 
-    Logger::Log(LogLevel::Info, "Engine::Run() starting");
-    Logger::Log(LogLevel::Info, "Calling game->OnInit()");
-
+    Logger::Log(LogLevel::Info, "Engine::Run() starting", "Engine");
+    Logger::Log(LogLevel::Info, "Calling game->OnInit()", "Engine");
     game->OnInit(*this);
 
     bool running = true;
@@ -187,14 +219,39 @@ void Engine::Run(IGame* game)
     {
         InputSystem::getInstance()->update(m_Window);
         if (InputSystem::getInstance()->shouldStop()) {
-            Logger::Log(LogLevel::Info, "InputSystem requested stop, leaving main loop");
+            Logger::Log(LogLevel::Info,
+                        "InputSystem requested stop, leaving main loop", "Engine");
             running = false;
             break;
+        }
+
+        Time::getInstance().computeDeltaTime();
+        float dt = Time::getInstance().getDeltaTime();
+
+        if ((frameCount++ % 300) == 0) {
+            Logger::Log(
+                LogLevel::Info,
+                "Frame " + std::to_string(frameCount) +
+                " dt=" + std::to_string(dt), "Engine");
         }
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
+
+        game->OnUpdate(*this, dt);
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT |
+                GL_DEPTH_BUFFER_BIT |
+                GL_STENCIL_BUFFER_BIT);
+
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+        glBindVertexArray(0);
+
+        game->OnRender(*this);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -211,33 +268,16 @@ void Engine::Run(IGame* game)
             SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
         }
 
-        Time::getInstance().computeDeltaTime();
-        float dt = Time::getInstance().getDeltaTime();
-
-        InputSystem::getInstance()->update(m_Window);
-
-        game->OnUpdate(*this, dt);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-        glBindVertexArray(0);
-
-        game->OnRender(*this);
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         SDL_GL_SwapWindow(m_Window);
     }
 
-    Logger::Log(LogLevel::Info, "Engine::Run() exiting main loop");
+    Logger::Log(LogLevel::Info, "Engine::Run() exiting main loop", "Engine");
 }
 
+
 Engine::~Engine() {
+    Logger::Log(LogLevel::Info, "Engine destructor: shutting down subsystems.", "Engine");
     shutdownImGui();
     shutdownSDL();
-    std::cout << "Engine shutdown.";
+    Logger::Log(LogLevel::Info, "Engine shutdown complete.", "Engine");
 }
