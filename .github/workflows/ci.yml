@@ -24,7 +24,7 @@ jobs:
       - name: Install LLVM/Clang tools
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "17"
+          version: "18"
 
       - name: Check formatting with clang-format
         run: |
