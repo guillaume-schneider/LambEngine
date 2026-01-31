@@ -1,19 +1,19 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
-#include <glm/glm.hpp>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <vector>
 #include <iostream>
+#include <vector>
 
-#include "shader.hpp"
-#include "shader_engine.hpp"
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#include <glm/glm.hpp>
+
 #include "primitive.hpp"
 #include "renderable.hpp"
+#include "shader.hpp"
+#include "shader_engine.hpp"
 #include "texture.hpp"
-
 
 /**
  * @class Mesh
@@ -22,19 +22,19 @@
  * This class extends Renderable and represents a mesh with vertices, indices,
  * and textures. It is used to define the geometry and appearance of a 3D object.
  */
-class Mesh : public Renderable {
-    public:
-        /**
-         * @brief Constructor for Mesh.
-         *
-         * Initializes a Mesh object with the given vertices, indices, and textures.
-         *
-         * @param vertices A vector of Vertex objects representing the vertices of the mesh.
-         * @param indices A vector of unsigned int representing the indices of the mesh.
-         * @param textures A vector of Texture objects representing the textures of the mesh.
-         */
-        Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices,
-             std::vector<Texture>& textures);
+class Mesh : public Renderable
+{
+public:
+    /**
+     * @brief Constructor for Mesh.
+     *
+     * Initializes a Mesh object with the given vertices, indices, and textures.
+     *
+     * @param vertices A vector of Vertex objects representing the vertices of the mesh.
+     * @param indices A vector of unsigned int representing the indices of the mesh.
+     * @param textures A vector of Texture objects representing the textures of the mesh.
+     */
+    Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::vector<Texture>& textures);
 };
 
 /**
@@ -44,7 +44,8 @@ class Mesh : public Renderable {
  * This class manages a collection of meshes and their associated textures.
  * It provides functionality for loading models from files and rendering them.
  */
-class Model {
+class Model
+{
 public:
     /**
      * @brief Constructor for Model.
@@ -83,13 +84,11 @@ public:
      *
      * @return A vector of Renderable objects representing the meshes of the model.
      */
-    std::vector<Renderable> getMeshes() {
-        return m_meshes;
-    }
+    std::vector<Renderable> getMeshes() { return m_meshes; }
 
 private:
-    std::vector<Renderable> m_meshes; /**< The meshes of the model. */
-    std::string m_directory; /**< The directory containing the model files. */
+    std::vector<Renderable> m_meshes;      /**< The meshes of the model. */
+    std::string m_directory;               /**< The directory containing the model files. */
     std::vector<Texture> m_texturesLoaded; /**< The textures loaded for the model. */
 
     /**
@@ -124,8 +123,8 @@ private:
      * @param lambTextureType The type of texture to load using the custom engine.
      * @return A vector of Texture objects representing the loaded textures.
      */
-    std::vector<Texture> loadMaterialTextures(aiMaterial* mat,
-        aiTextureType assimpTextureType, TextureType lambTextureType);
+    std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType assimpTextureType,
+                                              TextureType lambTextureType);
 };
 
 #endif

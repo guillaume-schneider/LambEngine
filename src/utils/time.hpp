@@ -3,9 +3,11 @@
 
 #include <SDL2/SDL.h>
 
-class Time {
+class Time
+{
 public:
-    static Time& getInstance() {
+    static Time& getInstance()
+    {
         static Time instance;
         return instance;
     }
@@ -13,25 +15,24 @@ public:
     Time(const Time&) = delete;
     Time& operator=(const Time&) = delete;
 
-    void computeDeltaTime() {
+    void computeDeltaTime()
+    {
         float currentFrame = SDL_GetTicks() / 1000.0f; // Convert ms to seconds
         m_deltaTime = currentFrame - m_lastFrame;
         m_lastFrame = currentFrame;
     }
 
-    float getDeltaTime() const {
-        return m_deltaTime;
-    }
-
+    float getDeltaTime() const { return m_deltaTime; }
 
 private:
     float m_deltaTime{};
     float m_lastFrame{};
 
-    Time() {
+    Time()
+    {
         // m_lastFrame = SDL_GetTicks() / 1000.0f;
     }
-    
+
     ~Time() {}
 };
 

@@ -1,28 +1,26 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 
-#include <mtl_parser.hpp>
 #include <material.hpp>
+#include <mtl_parser.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "Core/IGame.hpp"
 #include "Core/MyGame.hpp"
 #include "Core/engine.hpp"
-
 #include "log.hpp"
+#include "stb_image.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     Logger::Init(false, true, false);
 
-    Logger::RegisterSubsystemFile("Global",   "Logs/Global.log");
-    Logger::RegisterSubsystemFile("Engine",   "Logs/Engine/Engine.log");
+    Logger::RegisterSubsystemFile("Global", "Logs/Global.log");
+    Logger::RegisterSubsystemFile("Engine", "Logs/Engine/Engine.log");
     Logger::RegisterSubsystemFile("Renderer", "Logs/Renderer/Renderer.log");
-    Logger::RegisterSubsystemFile("Physics",  "Logs/Physics/Physics.log");
+    Logger::RegisterSubsystemFile("Physics", "Logs/Physics/Physics.log");
 
     MyGame game;
     EngineConfig cfg;

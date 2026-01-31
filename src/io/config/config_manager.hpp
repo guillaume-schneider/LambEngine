@@ -1,23 +1,25 @@
 #ifndef CONFIG_MATERIAL_H_
 #define CONFIG_MATERIAL_H_
 
-#include <nlohmann/json.hpp>
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <string>
+
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-class ConfigurationManager {
+class ConfigurationManager
+{
 public:
-    static ConfigurationManager* getInstance() {
-        if (instance == nullptr) instance = new ConfigurationManager();
+    static ConfigurationManager* getInstance()
+    {
+        if (instance == nullptr)
+            instance = new ConfigurationManager();
         return instance;
     }
 
-    std::string getMaterialsPath() {
-        return m_materials_path;
-    }
+    std::string getMaterialsPath() { return m_materials_path; }
 
 private:
     static ConfigurationManager* instance;
@@ -30,7 +32,8 @@ private:
 
     json parseJSON(const std::string& path);
 
-    ConfigurationManager() {
+    ConfigurationManager()
+    {
         m_config = parseJSON(m_config_path);
         m_materials_path = m_config["materials"];
     }

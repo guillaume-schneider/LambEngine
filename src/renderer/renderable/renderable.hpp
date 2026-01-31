@@ -1,16 +1,15 @@
 #ifndef RENDERABLE_H_
 #define RENDERABLE_H_
 
+#include <vector>
 
 #include <glad/glad.h>
-#include <vector>
-#include "texture.hpp"
+
 #include "shader.hpp"
 #include "shader_engine.hpp"
-
+#include "texture.hpp"
 
 #define MAX_BONE_INFLUENCE 4
-
 
 /**
  * @struct Vertex
@@ -19,13 +18,14 @@
  * This struct defines a vertex used in rendering, including its position, normal,
  * texture coordinates, tangent, bitangent, and bone influences for skeletal animation.
  */
-struct Vertex {
-    glm::vec3 position; /**< The position of the vertex in 3D space. */
-    glm::vec3 normal; /**< The normal vector of the vertex. */
-    glm::vec2 textureCoordinates; /**< The texture coordinates of the vertex. */
-    glm::vec3 tangent; /**< The tangent vector of the vertex. */
-    glm::vec3 biTangent; /**< The bitangent vector of the vertex. */
-    int m_BoneIDs[MAX_BONE_INFLUENCE]; /**< The bone IDs that influence this vertex. */
+struct Vertex
+{
+    glm::vec3 position;                  /**< The position of the vertex in 3D space. */
+    glm::vec3 normal;                    /**< The normal vector of the vertex. */
+    glm::vec2 textureCoordinates;        /**< The texture coordinates of the vertex. */
+    glm::vec3 tangent;                   /**< The tangent vector of the vertex. */
+    glm::vec3 biTangent;                 /**< The bitangent vector of the vertex. */
+    int m_BoneIDs[MAX_BONE_INFLUENCE];   /**< The bone IDs that influence this vertex. */
     float m_Weights[MAX_BONE_INFLUENCE]; /**< The weights of each bone's influence on this vertex. */
 };
 
@@ -36,7 +36,8 @@ struct Vertex {
  * This class provides the basic functionality for rendering objects, including
  * setting up OpenGL buffers, drawing, and managing textures and shaders.
  */
-class Renderable {
+class Renderable
+{
 public:
     /**
      * @brief Default constructor.
@@ -106,13 +107,13 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Renderable& renderable);
 
 protected:
-    GLuint m_VAO; /**< The Vertex Array Object (VAO) for the Renderable object. */
-    GLuint m_VBO; /**< The Vertex Buffer Object (VBO) for the Renderable object. */
-    GLuint m_EBO; /**< The Element Buffer Object (EBO) for the Renderable object. */
-    ShaderEngine m_engine; /**< The shader engine used for rendering. */
-    std::vector<Vertex> m_vertices; /**< The vertices of the Renderable object. */
+    GLuint m_VAO;                        /**< The Vertex Array Object (VAO) for the Renderable object. */
+    GLuint m_VBO;                        /**< The Vertex Buffer Object (VBO) for the Renderable object. */
+    GLuint m_EBO;                        /**< The Element Buffer Object (EBO) for the Renderable object. */
+    ShaderEngine m_engine;               /**< The shader engine used for rendering. */
+    std::vector<Vertex> m_vertices;      /**< The vertices of the Renderable object. */
     std::vector<unsigned int> m_indices; /**< The indices of the Renderable object. */
-    std::vector<Texture> m_textures; /**< The textures of the Renderable object. */
+    std::vector<Texture> m_textures;     /**< The textures of the Renderable object. */
 };
 
 #endif

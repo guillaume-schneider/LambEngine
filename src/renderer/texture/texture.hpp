@@ -1,9 +1,10 @@
 #ifndef TEXTURE_HPP_
 #define TEXTURE_HPP_
 
-#include <glad/glad.h>
-#include <string>
 #include <stdexcept>
+#include <string>
+
+#include <glad/glad.h>
 
 /**
  * @enum TextureType
@@ -12,7 +13,8 @@
  * This enum defines the types of textures that can be used in rendering.
  * Each type corresponds to a specific texture map used in shading calculations.
  */
-enum TextureType {
+enum TextureType
+{
     NOT_TEXTURE = -1, /**< Represents an invalid or uninitialized texture type. */
     DIFFUSE,          /**< Represents a diffuse texture map. */
     SPECULAR          /**< Represents a specular texture map. */
@@ -47,8 +49,9 @@ TextureType fromString(const std::string& str);
  * This struct defines a texture used in rendering, including its OpenGL ID,
  * type, and the file path from which it was loaded.
  */
-struct Texture {
-    GLuint id; /**< The OpenGL ID of the texture. */
+struct Texture
+{
+    GLuint id;        /**< The OpenGL ID of the texture. */
     TextureType type; /**< The type of the texture. */
     std::string path; /**< The file path to the texture image. */
 };

@@ -3,7 +3,8 @@
 
 #include <string>
 
-class Component {
+class Component
+{
 public:
     int id;
     std::string label;

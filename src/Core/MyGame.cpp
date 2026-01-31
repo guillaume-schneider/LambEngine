@@ -1,23 +1,23 @@
 // MyGame.cpp
 #include "MyGame.hpp"
 
-#include "shader.hpp"
-#include "shader_engine.hpp"
-#include "camera.hpp"
-#include "time.hpp"
-#include "model.hpp"
-#include "primitive.hpp"
-#include "input.hpp"
-#include "materials.hpp"
-#include "entity.hpp"
-#include "entity_manager.hpp"
+#include <format> // pour std::format
+#include <vector>
 
+#include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <SDL2/SDL.h>
-#include <format>   // pour std::format
-#include <vector>
+#include "camera.hpp"
+#include "entity.hpp"
+#include "entity_manager.hpp"
+#include "input.hpp"
+#include "materials.hpp"
+#include "model.hpp"
+#include "primitive.hpp"
+#include "shader.hpp"
+#include "shader_engine.hpp"
+#include "time.hpp"
 
 // Pas de STB_IMAGE_IMPLEMENTATION ici !
 // Place-le dans un seul .cpp autre (ex: Texture.cpp).
@@ -32,34 +32,25 @@ void MyGame::OnInit(Engine& engine)
 
     // Shaders pour la scène
     m_LightingShader = new ShaderEngine();
-    m_LightShader    = new ShaderEngine();
+    m_LightShader = new ShaderEngine();
 
-    Shader lightingVertexShader =
-        ShaderFactory::createShader(".\\shaders\\lighting_vertex.glsl",
-                                    GL_VERTEX_SHADER);
+    Shader lightingVertexShader = ShaderFactory::createShader(".\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
     m_LightingShader->addShader(lightingVertexShader);
 
     Shader lightingFragmentShader =
-        ShaderFactory::createShader(".\\shaders\\lighting_fragment.glsl",
-                                    GL_FRAGMENT_SHADER);
+        ShaderFactory::createShader(".\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
     m_LightingShader->addShader(lightingFragmentShader);
     m_LightingShader->compile();
 
-    Shader lightVertexShader =
-        ShaderFactory::createShader(".\\shaders\\light_vertex.glsl",
-                                    GL_VERTEX_SHADER);
+    Shader lightVertexShader = ShaderFactory::createShader(".\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
     m_LightShader->addShader(lightVertexShader);
 
-    Shader lightFragmentShader =
-        ShaderFactory::createShader(".\\shaders\\light_fragment.glsl",
-                                    GL_FRAGMENT_SHADER);
+    Shader lightFragmentShader = ShaderFactory::createShader(".\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
     m_LightShader->addShader(lightFragmentShader);
     m_LightShader->compile();
 
-    m_BasicShader =
-        new ShaderEngine(ShaderEngineFactory::createEngine(
-            ".\\shaders\\basic_vertex.glsl",
-            ".\\shaders\\shader_single_color_fragment.glsl"));
+    m_BasicShader = new ShaderEngine(ShaderEngineFactory::createEngine(
+        ".\\shaders\\basic_vertex.glsl", ".\\shaders\\shader_single_color_fragment.glsl"));
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -84,43 +75,24 @@ void MyGame::OnInit(Engine& engine)
     m_Camera = new Camera();
 
     // Positions des cubes
-    m_CubePositions = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
+    m_CubePositions = {glm::vec3(0.0f, 0.0f, 0.0f),     glm::vec3(2.0f, 5.0f, -15.0f), glm::vec3(-1.5f, -2.2f, -2.5f),
+                       glm::vec3(-3.8f, -2.0f, -12.3f), glm::vec3(2.4f, -0.4f, -3.5f), glm::vec3(-1.7f, 3.0f, -7.5f),
+                       glm::vec3(1.3f, -2.0f, -2.5f),   glm::vec3(1.5f, 2.0f, -2.5f),  glm::vec3(1.5f, 0.2f, -1.5f),
+                       glm::vec3(-1.3f, 1.0f, -1.5f)};
 
     // Positions des lights
-    m_PointLightPositions = {
-        glm::vec3(0.7f, 0.2f, 2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f, 2.0f, -12.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f)
-    };
+    m_PointLightPositions = {glm::vec3(0.7f, 0.2f, 2.0f), glm::vec3(2.3f, -3.3f, -4.0f), glm::vec3(-4.0f, 2.0f, -12.0f),
+                             glm::vec3(0.0f, 0.0f, -3.0f)};
 
     // Input caméra
     InputHandler::CursorMovementCallback callback =
-        std::bind(&Camera::computeCursorCameraMovements,
-                  m_Camera,
-                  std::placeholders::_1,
-                  std::placeholders::_2);
+        std::bind(&Camera::computeCursorCameraMovements, m_Camera, std::placeholders::_1, std::placeholders::_2);
     InputHandlerFactory::createInputHandler(callback);
 
     // Matériaux (pour plus tard)
-    Material goldMaterial =
-        MaterialManager::getInstance()->getMaterial(MaterialType::GOLD);
-    Material silverMaterial =
-        MaterialManager::getInstance()->getMaterial(MaterialType::SILVER);
-    Material copperMaterial =
-        MaterialManager::getInstance()->getMaterial(MaterialType::COPPER);
-
+    Material goldMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::GOLD);
+    Material silverMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::SILVER);
+    Material copperMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::COPPER);
 }
 
 // -----------------------------
@@ -148,12 +120,7 @@ void MyGame::OnRender(Engine& engine)
     glStencilMask(0xFF);
 
     glm::mat4 view = m_Camera->getViewMatrix();
-    glm::mat4 projection = glm::perspective(
-        glm::radians(45.0f),
-        m_CurrentAspectRatio,
-        0.1f,
-        100.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), m_CurrentAspectRatio, 0.1f, 100.0f);
 
     // ---- Light cubes ----
     // m_LightShader->use();

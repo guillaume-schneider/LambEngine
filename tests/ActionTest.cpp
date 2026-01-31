@@ -1,9 +1,11 @@
-#include <gtest/gtest.h>
-#include <SDL2/SDL.h>
 #include <vector>
+
+#include <SDL2/SDL.h>
+#include <gtest/gtest.h>
 #include <input.hpp>
 
-TEST(ActionTest, GetActionsTest) {
+TEST(ActionTest, GetActionsTest)
+{
     Uint8 keystate[SDL_NUM_SCANCODES] = {0};
 
     // Test for the "W" key (Forward)

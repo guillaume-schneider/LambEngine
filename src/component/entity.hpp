@@ -1,10 +1,11 @@
 #ifndef ENTITY_HPP_
 #define ENTITY_HPP_
 
-#include <transform.hpp>
 #include <model.hpp>
+#include <transform.hpp>
 
-class Entity {
+class Entity
+{
 public:
     Entity() : id(entityCount++) {}
     ~Entity() {}

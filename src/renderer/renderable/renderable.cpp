@@ -1,18 +1,21 @@
-#include <renderable.hpp>
 #include <iostream>
+
 #include <glad/glad.h>
-#include "stb_image.h"
-#include <texture.hpp>
+#include <renderable.hpp>
 #include <shader.hpp>
+#include <texture.hpp>
+
 #include "shader_engine.hpp"
+#include "stb_image.h"
 
-
-void Renderable::setup() {
+void Renderable::setup()
+{
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
 
-    if (m_VAO == 0 || m_VBO == 0 || m_EBO == 0) {
+    if (m_VAO == 0 || m_VBO == 0 || m_EBO == 0)
+    {
         std::cerr << "Error: Failed to generate buffers!" << std::endl;
         return;
     }
@@ -20,12 +23,10 @@ void Renderable::setup() {
     glBindVertexArray(m_VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex),
-                    &m_vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex), &m_vertices[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int),
-                    &m_indices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), &m_indices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
@@ -40,41 +41,52 @@ void Renderable::setup() {
     glBindVertexArray(0);
 }
 
-void Renderable::destroy() {
-    if (m_VBO != 0) {
+void Renderable::destroy()
+{
+    if (m_VBO != 0)
+    {
         glDeleteBuffers(1, &m_VBO);
         m_VBO = 0;
     }
-    if (m_EBO != 0) {
+    if (m_EBO != 0)
+    {
         glDeleteBuffers(1, &m_EBO);
         m_EBO = 0;
     }
-    if (m_VAO != 0) {
+    if (m_VAO != 0)
+    {
         glDeleteVertexArrays(1, &m_VAO);
         m_VAO = 0;
     }
 }
 
+void Renderable::draw()
+{
+    if (!glIsVertexArray(m_VAO))
+        std::cerr << "No VAO bound." << std::endl;
+    if (!glIsBuffer(m_EBO))
+        std::cerr << "No EBO bound." << std::endl;
+    if (!glIsBuffer(m_VBO))
+        std::cerr << "No VBO bound." << std::endl;
 
-void Renderable::draw() {
-    if (!glIsVertexArray(m_VAO)) std::cerr << "No VAO bound." << std::endl;
-    if (!glIsBuffer(m_EBO)) std::cerr << "No EBO bound." << std::endl;
-    if (!glIsBuffer(m_VBO)) std::cerr << "No VBO bound." << std::endl;
-
-    if (m_engine.size() <= 0) {
+    if (m_engine.size() <= 0)
+    {
         // m_engine.addShader(Renderable::basicVertexShader);
         // m_engine.addShader(Renderable::basicFragmentShader);
     }
 
     m_engine.use();
     glBindVertexArray(m_VAO);
-    if (!m_textures.empty()) {
+    if (!m_textures.empty())
+    {
         unsigned int diffuseNumber = 1, specularNumber = 1;
-        for (int i = 0; i < m_textures.size(); i++) {
+        for (int i = 0; i < m_textures.size(); i++)
+        {
             glActiveTexture(GL_TEXTURE0 + i);
             std::string number;
             TextureType type = m_textures[i].type;
-            switch (type) {
+            switch (type)
+            {
                 case TextureType::DIFFUSE:
                     number = std::to_string(diffuseNumber++);
                     break;
@@ -85,7 +97,8 @@ void Renderable::draw() {
 
             std::string typeStr = toString(type);
             std::string textureUniformName = "material." + typeStr + number;
-            m_engine.setInt(textureUniformName.c_str(), i); // c_str() need to be called directly, otherwise pointer will be lose.
+            m_engine.setInt(textureUniformName.c_str(),
+                            i); // c_str() need to be called directly, otherwise pointer will be lose.
             glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
         }
     }
@@ -97,22 +110,24 @@ void Renderable::draw() {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-
-void Renderable::setTexture(const char* path, TextureType type) {
+void Renderable::setTexture(const char* path, TextureType type)
+{
     std::string filename(path);
 
     Texture texture;
     texture.type = type;
     texture.path = std::string(path);
     glGenTextures(1, &texture.id);
-    if (texture.id == 0) {
+    if (texture.id == 0)
+    {
         std::cerr << "Error: Failed to generate texture ID!" << std::endl;
         return;
     }
 
     int width, height, nrComponents;
-    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
-    if (data) {
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    if (data)
+    {
         GLenum format = GL_RGB;
         if (nrComponents == 1)
             format = GL_RED;
@@ -134,31 +149,37 @@ void Renderable::setTexture(const char* path, TextureType type) {
         stbi_image_free(data);
 
         m_textures.push_back(texture);
-    } else {
+    }
+    else
+    {
         std::cerr << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const Renderable& renderable) {
+std::ostream& operator<<(std::ostream& os, const Renderable& renderable)
+{
     os << "Renderable Object:\n";
     os << "Vertices:\n";
-    for (const auto& vertex : renderable.m_vertices) {
+    for (const auto& vertex : renderable.m_vertices)
+    {
         os << "  Position: (" << vertex.position.x << ", " << vertex.position.y << ", " << vertex.position.z << "), ";
         os << "Normal: (" << vertex.normal.x << ", " << vertex.normal.y << ", " << vertex.normal.z << "), ";
         os << "Texture Coordinates: (" << vertex.textureCoordinates.x << ", " << vertex.textureCoordinates.y << ")\n";
     }
 
     os << "Indices:\n";
-    for (const auto& index : renderable.m_indices) {
+    for (const auto& index : renderable.m_indices)
+    {
         os << "  " << index << " ";
     }
     os << "\n";
 
     os << "Textures:\n";
-    for (const auto& texture : renderable.m_textures) {
+    for (const auto& texture : renderable.m_textures)
+    {
         os << "  ID: " << texture.id << ", Type: " << texture.type << ", Path: " << texture.path << "\n";
     }
-    
+
     return os;
 }

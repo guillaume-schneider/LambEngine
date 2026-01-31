@@ -1,32 +1,35 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
-#include <string>
-#include <mutex>
 #include <chrono>
-#include <iomanip>
-#include <sstream>
-#include <thread>
-#include <deque>
 #include <condition_variable>
+#include <deque>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <unordered_map>
 
-enum class LogLevel { Info, Warning, Error };
+enum class LogLevel
+{
+    Info,
+    Warning,
+    Error
+};
 
 class Logger
 {
 public:
-    static void Init(bool enableConsole = true,
-                     bool useColors = true,
-                     bool jsonMode = false)
+    static void Init(bool enableConsole = true, bool useColors = true, bool jsonMode = false)
     {
         Logger& inst = Get();
         std::lock_guard<std::mutex> lock(inst.m_Mutex);
         inst.m_EnableConsole = enableConsole;
-        inst.m_UseColors     = useColors;
-        inst.m_JsonMode      = jsonMode;
+        inst.m_UseColors = useColors;
+        inst.m_JsonMode = jsonMode;
 
         if (!inst.m_WorkerStarted)
         {
@@ -36,9 +39,7 @@ public:
         }
     }
 
-    static void RegisterSubsystemFile(const std::string& subsystem,
-                                      const std::string& filePath,
-                                      bool append = true)
+    static void RegisterSubsystemFile(const std::string& subsystem, const std::string& filePath, bool append = true)
     {
         Logger& inst = Get();
         std::lock_guard<std::mutex> lock(inst.m_Mutex);
@@ -50,12 +51,14 @@ public:
         info.rotationIndex = 0;
 
         std::ios::openmode mode = std::ios::out;
-        if (append) mode |= std::ios::app;
+        if (append)
+            mode |= std::ios::app;
 
         info.stream.open(info.basePath, mode);
-        if (!info.stream.is_open()) {
-            std::cerr << "[LOGGER] Failed to open log file for subsystem '"
-                      << subsystem << "': " << filePath << std::endl;
+        if (!info.stream.is_open())
+        {
+            std::cerr << "[LOGGER] Failed to open log file for subsystem '" << subsystem << "': " << filePath
+                      << std::endl;
             return;
         }
 
@@ -76,16 +79,15 @@ public:
             inst.m_WorkerThread.join();
 
         std::lock_guard<std::mutex> lock(inst.m_Mutex);
-        for (auto& [subsystem, info] : inst.m_FileStreams) {
+        for (auto& [subsystem, info] : inst.m_FileStreams)
+        {
             if (info.stream.is_open())
                 info.stream.close();
         }
         inst.m_FileStreams.clear();
     }
 
-    static void Log(LogLevel level,
-                    const std::string& msg,
-                    const std::string& subsystem = "Core")
+    static void Log(LogLevel level, const std::string& msg, const std::string& subsystem = "Core")
     {
 #ifdef DEBUG
         Logger& inst = Get();
@@ -107,16 +109,18 @@ private:
     Logger() = default;
     ~Logger() = default;
 
-    struct LogMessage {
-        LogLevel     level;
-        std::string  message;
-        std::string  subsystem;
+    struct LogMessage
+    {
+        LogLevel level;
+        std::string message;
+        std::string subsystem;
     };
 
-    struct FileInfo {
-        std::ofstream          stream;
-        std::filesystem::path  basePath;
-        std::size_t            rotationIndex = 0;
+    struct FileInfo
+    {
+        std::ofstream stream;
+        std::filesystem::path basePath;
+        std::size_t rotationIndex = 0;
     };
 
     static Logger& Get()
@@ -133,9 +137,7 @@ private:
 
             {
                 std::unique_lock<std::mutex> lock(m_Mutex);
-                m_Cv.wait(lock, [&]{
-                    return m_Exit || !m_Queue.empty();
-                });
+                m_Cv.wait(lock, [&] { return m_Exit || !m_Queue.empty(); });
 
                 if (m_Exit && m_Queue.empty())
                     break;
@@ -152,16 +154,18 @@ private:
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
 
-        std::string line = m_JsonMode
-            ? FormatJsonLine(entry.level, entry.message, entry.subsystem)
-            : FormatTextLine(entry.level, entry.message, entry.subsystem);
+        std::string line = m_JsonMode ? FormatJsonLine(entry.level, entry.message, entry.subsystem)
+                                      : FormatTextLine(entry.level, entry.message, entry.subsystem);
 
         if (m_EnableConsole)
         {
-            if (m_UseColors && !m_JsonMode) {
+            if (m_UseColors && !m_JsonMode)
+            {
                 const char* color = ColorForLevel(entry.level);
                 std::cout << color << line << "\033[0m" << std::endl;
-            } else {
+            }
+            else
+            {
                 std::cout << line << std::endl;
             }
         }
@@ -172,8 +176,7 @@ private:
             WriteToSubsystemFile("Global", line);
     }
 
-    void WriteToSubsystemFile(const std::string& subsystem,
-                              const std::string& line)
+    void WriteToSubsystemFile(const std::string& subsystem, const std::string& line)
     {
         auto it = m_FileStreams.find(subsystem);
         if (it == m_FileStreams.end())
@@ -186,14 +189,19 @@ private:
 
         constexpr std::uintmax_t MAX_SIZE = 5ull * 1024ull * 1024ull; // 5 MB
 
-        try {
-            if (std::filesystem::exists(info.basePath)) {
+        try
+        {
+            if (std::filesystem::exists(info.basePath))
+            {
                 auto size = std::filesystem::file_size(info.basePath);
-                if (size >= MAX_SIZE) {
+                if (size >= MAX_SIZE)
+                {
                     RotateFile(info);
                 }
             }
-        } catch (...) {
+        }
+        catch (...)
+        {
         }
 
         info.stream << line << std::endl;
@@ -206,10 +214,10 @@ private:
 
         info.rotationIndex++;
 
-        std::filesystem::path base      = info.basePath;
-        std::filesystem::path parent    = base.parent_path();
-        std::string           stem      = base.stem().string();
-        std::string           extension = base.extension().string();
+        std::filesystem::path base = info.basePath;
+        std::filesystem::path parent = base.parent_path();
+        std::string stem = base.stem().string();
+        std::string extension = base.extension().string();
 
         std::string newName = stem + "_" + std::to_string(info.rotationIndex) + extension;
         std::filesystem::path newPath = parent / newName;
@@ -218,36 +226,31 @@ private:
 
         std::ios::openmode mode = std::ios::out;
         info.stream.open(info.basePath, mode);
-        if (!info.stream.is_open()) {
-            std::cerr << "[LOGGER] Failed to rotate log file to "
-                      << info.basePath.string() << std::endl;
+        if (!info.stream.is_open())
+        {
+            std::cerr << "[LOGGER] Failed to rotate log file to " << info.basePath.string() << std::endl;
         }
     }
 
-    std::string FormatTextLine(LogLevel level,
-                               const std::string& msg,
-                               const std::string& subsystem)
+    std::string FormatTextLine(LogLevel level, const std::string& msg, const std::string& subsystem)
     {
         std::ostringstream oss;
         oss << "[" << MakeTimestamp() << "]"
             << " [T:" << ThreadIdString() << "]"
             << " [" << subsystem << "]"
-            << " [" << LevelToString(level) << "] "
-            << msg;
+            << " [" << LevelToString(level) << "] " << msg;
         return oss.str();
     }
 
-    std::string FormatJsonLine(LogLevel level,
-                               const std::string& msg,
-                               const std::string& subsystem)
+    std::string FormatJsonLine(LogLevel level, const std::string& msg, const std::string& subsystem)
     {
         std::ostringstream oss;
         oss << "{"
             << "\"timestamp\":\"" << EscapeJson(MakeTimestamp()) << "\","
-            << "\"thread\":\""    << EscapeJson(ThreadIdString()) << "\","
+            << "\"thread\":\"" << EscapeJson(ThreadIdString()) << "\","
             << "\"subsystem\":\"" << EscapeJson(subsystem) << "\","
-            << "\"level\":\""     << EscapeJson(LevelToString(level)) << "\","
-            << "\"message\":\""   << EscapeJson(msg) << "\""
+            << "\"level\":\"" << EscapeJson(LevelToString(level)) << "\","
+            << "\"message\":\"" << EscapeJson(msg) << "\""
             << "}";
         return oss.str();
     }
@@ -256,19 +259,18 @@ private:
     {
         using namespace std::chrono;
         auto now = system_clock::now();
-        auto t   = system_clock::to_time_t(now);
-        auto ms  = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+        auto t = system_clock::to_time_t(now);
+        auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
 
         std::tm tm{};
-    #ifdef _WIN32
+#ifdef _WIN32
         localtime_s(&tm, &t);
-    #else
+#else
         localtime_r(&t, &tm);
-    #endif
+#endif
 
         std::ostringstream oss;
-        oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S")
-            << '.' << std::setw(3) << std::setfill('0') << ms.count();
+        oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << '.' << std::setw(3) << std::setfill('0') << ms.count();
         return oss.str();
     }
 
@@ -286,19 +288,32 @@ private:
         {
             switch (c)
             {
-            case '\"': oss << "\\\""; break;
-            case '\\': oss << "\\\\"; break;
-            case '\b': oss << "\\b";  break;
-            case '\f': oss << "\\f";  break;
-            case '\n': oss << "\\n";  break;
-            case '\r': oss << "\\r";  break;
-            case '\t': oss << "\\t";  break;
-            default:
-                if (static_cast<unsigned char>(c) < 0x20)
-                    oss << "\\u" << std::hex << std::setw(4)
-                        << std::setfill('0') << (int)c;
-                else
-                    oss << c;
+                case '\"':
+                    oss << "\\\"";
+                    break;
+                case '\\':
+                    oss << "\\\\";
+                    break;
+                case '\b':
+                    oss << "\\b";
+                    break;
+                case '\f':
+                    oss << "\\f";
+                    break;
+                case '\n':
+                    oss << "\\n";
+                    break;
+                case '\r':
+                    oss << "\\r";
+                    break;
+                case '\t':
+                    oss << "\\t";
+                    break;
+                default:
+                    if (static_cast<unsigned char>(c) < 0x20)
+                        oss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
+                    else
+                        oss << c;
             }
         }
         return oss.str();
@@ -306,21 +321,31 @@ private:
 
     const char* ColorForLevel(LogLevel level) const
     {
-        switch (level) {
-        case LogLevel::Info:    return "\033[37m"; // gris
-        case LogLevel::Warning: return "\033[33m"; // jaune
-        case LogLevel::Error:   return "\033[31m"; // rouge
-        default:                return "\033[37m";
+        switch (level)
+        {
+            case LogLevel::Info:
+                return "\033[37m"; // gris
+            case LogLevel::Warning:
+                return "\033[33m"; // jaune
+            case LogLevel::Error:
+                return "\033[31m"; // rouge
+            default:
+                return "\033[37m";
         }
     }
 
     const char* LevelToString(LogLevel level) const
     {
-        switch (level) {
-        case LogLevel::Info:    return "INFO";
-        case LogLevel::Warning: return "WARN";
-        case LogLevel::Error:   return "ERROR";
-        default:                return "UNK";
+        switch (level)
+        {
+            case LogLevel::Info:
+                return "INFO";
+            case LogLevel::Warning:
+                return "WARN";
+            case LogLevel::Error:
+                return "ERROR";
+            default:
+                return "UNK";
         }
     }
 
@@ -328,22 +353,23 @@ private:
     {
         std::filesystem::path p(filePath);
         auto parent = p.parent_path();
-        if (!parent.empty() && !std::filesystem::exists(parent)) {
+        if (!parent.empty() && !std::filesystem::exists(parent))
+        {
             std::filesystem::create_directories(parent);
         }
     }
 
 private:
     bool m_EnableConsole = true;
-    bool m_UseColors     = true;
-    bool m_JsonMode      = false;
+    bool m_UseColors = true;
+    bool m_JsonMode = false;
 
     std::unordered_map<std::string, FileInfo> m_FileStreams;
 
     std::deque<LogMessage> m_Queue;
-    std::mutex             m_Mutex;
+    std::mutex m_Mutex;
     std::condition_variable m_Cv;
-    std::thread            m_WorkerThread;
-    bool                   m_WorkerStarted = false;
-    bool                   m_Exit          = false;
+    std::thread m_WorkerThread;
+    bool m_WorkerStarted = false;
+    bool m_Exit = false;
 };

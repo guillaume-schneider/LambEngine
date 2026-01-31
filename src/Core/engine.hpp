@@ -1,9 +1,11 @@
 #pragma once
 
-#include "string"
 #include <SDL2/SDL.h>
 
-struct EngineConfig {
+#include "string"
+
+struct EngineConfig
+{
     unsigned int width = 1980;
     unsigned int height = 1080;
     std::string title = "My Engine";
@@ -14,7 +16,8 @@ struct EngineConfig {
 
 class IGame;
 
-class Engine {
+class Engine
+{
 public:
     explicit Engine(const EngineConfig& cfg);
     ~Engine();
@@ -30,8 +33,7 @@ private:
 
     EngineConfig m_Config;
 
-    SDL_Window*   m_Window = nullptr;
+    SDL_Window* m_Window = nullptr;
     SDL_GLContext m_Context = nullptr;
-    float         m_AspectRatio = 16.0f / 9.0f;
+    float m_AspectRatio = 16.0f / 9.0f;
 };
-

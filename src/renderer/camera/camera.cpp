@@ -1,14 +1,15 @@
-#include <camera.hpp>
-#include <time.hpp>
-#include <input.hpp>
 #include <vector>
+
+#include <SDL2/SDL.h>
+#include <camera.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <SDL2/SDL.h>
+#include <input.hpp>
+#include <time.hpp>
 
-
-void Camera::computeCursorCameraMovements(int x, int y) {
+void Camera::computeCursorCameraMovements(int x, int y)
+{
     yaw += x * m_mouseSensitivity;
     pitch -= y * m_mouseSensitivity;
 
@@ -21,22 +22,22 @@ void Camera::computeCursorCameraMovements(int x, int y) {
     m_direction = glm::normalize(direction);
 }
 
-void Camera::computeAction(Action action) {
+void Camera::computeAction(Action action)
+{
     float deltaTime = Time::getInstance().getDeltaTime();
-    switch (action) {
+    switch (action)
+    {
         case Action::Up:
-            m_position += m_cameraSpeed * deltaTime * m_up;            
+            m_position += m_cameraSpeed * deltaTime * m_up;
             break;
         case Action::Down:
             m_position -= m_cameraSpeed * deltaTime * m_up;
             break;
         case Action::Right:
-            m_position += glm::normalize(glm::cross(m_direction, m_up)) 
-                          * m_cameraSpeed * deltaTime;
+            m_position += glm::normalize(glm::cross(m_direction, m_up)) * m_cameraSpeed * deltaTime;
             break;
         case Action::Left:
-            m_position -= glm::normalize(glm::cross(m_direction, m_up))
-                          * m_cameraSpeed * deltaTime;
+            m_position -= glm::normalize(glm::cross(m_direction, m_up)) * m_cameraSpeed * deltaTime;
             break;
         case Action::Forward:
             m_position += m_cameraSpeed * deltaTime * m_direction;
@@ -47,7 +48,8 @@ void Camera::computeAction(Action action) {
     }
 }
 
-void Camera::computeActions(const std::vector<Action> &actions) {
+void Camera::computeActions(const std::vector<Action>& actions)
+{
     for (auto action : actions)
         computeAction(action);
 }

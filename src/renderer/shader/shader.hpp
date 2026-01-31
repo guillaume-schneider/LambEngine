@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,9 +15,10 @@
  * This struct defines a shader used in rendering, including its source code
  * and an ID that uniquely identifies the shader in the graphics pipeline.
  */
-struct Shader {
+struct Shader
+{
     std::string source; /**< The source code of the shader. */
-    unsigned int id; /**< The ID of the shader. */
+    unsigned int id;    /**< The ID of the shader. */
 };
 
 /**
@@ -26,7 +28,8 @@ struct Shader {
  * This class provides a static method for creating shaders from file paths.
  * It handles the loading and compilation of shader source code.
  */
-class ShaderFactory {
+class ShaderFactory
+{
 public:
     /**
      * @brief Creates a shader from a file.

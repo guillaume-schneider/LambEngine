@@ -1,11 +1,10 @@
 #ifndef PRIMITIVE_H_
 #define PRIMITIVE_H_
 
-
-#include <vector>
 #include <sstream>
-#include <renderable.hpp>
+#include <vector>
 
+#include <renderable.hpp>
 
 /**
  * @class Primitive
@@ -15,50 +14,52 @@
  * such as cubes and spheres. It defines the interface for computing vertices
  * and indices, which must be implemented by derived classes.
  */
-class Primitive : public Renderable {
-    public:
-        /**
-         * @brief Default constructor.
-         */
-        Primitive() : Renderable() {}
-    
-        /**
-         * @brief Virtual destructor.
-         */
-        virtual ~Primitive() {}
-    
-    protected:
-        /**
-         * @brief Initializes the primitive by computing vertices and indices.
-         *
-         * This method calls computeVertices() and computeIndices() to get the
-         * vertices and indices for the primitive, then sets up the rendering.
-         */
-        void init() {
-            m_vertices = computeVertices();
-            m_indices = computeIndices();
-            setup();
-        }
-    
-        /**
-         * @brief Computes the vertices for the primitive.
-         *
-         * This is a pure virtual function that must be implemented by derived classes.
-         *
-         * @return A vector of Vertex objects representing the vertices of the primitive.
-         */
-        virtual std::vector<Vertex> computeVertices() = 0;
-    
-        /**
-         * @brief Computes the indices for the primitive.
-         *
-         * This is a pure virtual function that must be implemented by derived classes.
-         *
-         * @return A vector of unsigned int representing the indices of the primitive.
-         */
-        virtual std::vector<unsigned int> computeIndices() = 0;
+class Primitive : public Renderable
+{
+public:
+    /**
+     * @brief Default constructor.
+     */
+    Primitive() : Renderable() {}
+
+    /**
+     * @brief Virtual destructor.
+     */
+    virtual ~Primitive() {}
+
+protected:
+    /**
+     * @brief Initializes the primitive by computing vertices and indices.
+     *
+     * This method calls computeVertices() and computeIndices() to get the
+     * vertices and indices for the primitive, then sets up the rendering.
+     */
+    void init()
+    {
+        m_vertices = computeVertices();
+        m_indices = computeIndices();
+        setup();
+    }
+
+    /**
+     * @brief Computes the vertices for the primitive.
+     *
+     * This is a pure virtual function that must be implemented by derived classes.
+     *
+     * @return A vector of Vertex objects representing the vertices of the primitive.
+     */
+    virtual std::vector<Vertex> computeVertices() = 0;
+
+    /**
+     * @brief Computes the indices for the primitive.
+     *
+     * This is a pure virtual function that must be implemented by derived classes.
+     *
+     * @return A vector of unsigned int representing the indices of the primitive.
+     */
+    virtual std::vector<unsigned int> computeIndices() = 0;
 };
-    
+
 /**
  * @class Cube
  * @brief Represents a cube primitive.
@@ -66,7 +67,8 @@ class Primitive : public Renderable {
  * This class defines a cube primitive, including methods to set the scale
  * and compute the vertices and indices for rendering.
  */
-class Cube : public Primitive {
+class Cube : public Primitive
+{
 public:
     /**
      * @brief Default constructor.
@@ -87,7 +89,8 @@ public:
      *
      * @param value The new scale value.
      */
-    void setScale(float value) {
+    void setScale(float value)
+    {
         m_scale = value;
         init();
     }
@@ -117,7 +120,7 @@ protected:
 private:
     float m_scale{1.0f}; /**< The scale of the cube. */
 };
-    
+
 /**
  * @class Sphere
  * @brief Represents a sphere primitive.
@@ -125,7 +128,8 @@ private:
  * This class defines a sphere primitive, including methods to set the radius,
  * stack count, and sector count, and compute the vertices and indices for rendering.
  */
-class Sphere : public Primitive {
+class Sphere : public Primitive
+{
 public:
     /**
      * @brief Default constructor.
@@ -133,18 +137,14 @@ public:
      * Initializes a sphere with a default radius of 1.0, stack count of 16,
      * and sector count of 32.
      */
-    Sphere() : Primitive(), m_radius(1.0f), m_stackCount(16), m_sectorCount(32) {
-        init();
-    }
+    Sphere() : Primitive(), m_radius(1.0f), m_stackCount(16), m_sectorCount(32) { init(); }
 
     /**
      * @brief Constructor with radius.
      *
      * @param radius The radius of the sphere.
      */
-    Sphere(float radius) : Primitive(), m_radius(radius), m_stackCount(16), m_sectorCount(32) {
-        init();
-    }
+    Sphere(float radius) : Primitive(), m_radius(radius), m_stackCount(16), m_sectorCount(32) { init(); }
 
     /**
      * @brief Constructor with stack count, sector count, and radius.
@@ -154,7 +154,8 @@ public:
      * @param radius The radius of the sphere.
      */
     Sphere(int stackCount, int sectorCount, float radius)
-        : Primitive(), m_radius(radius), m_stackCount(stackCount), m_sectorCount(sectorCount) {
+        : Primitive(), m_radius(radius), m_stackCount(stackCount), m_sectorCount(sectorCount)
+    {
         init();
     }
 
@@ -195,9 +196,9 @@ protected:
     std::vector<unsigned int> computeIndices() override;
 
 private:
-    int m_stackCount{16};   /**< The stack count of the sphere. */
-    int m_sectorCount{32};  /**< The sector count of the sphere. */
-    float m_radius{1.0f};   /**< The radius of the sphere. */
+    int m_stackCount{16};  /**< The stack count of the sphere. */
+    int m_sectorCount{32}; /**< The sector count of the sphere. */
+    float m_radius{1.0f};  /**< The radius of the sphere. */
 };
 
 #endif
