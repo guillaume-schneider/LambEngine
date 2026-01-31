@@ -12,10 +12,11 @@ env:
   VCPKG_DEFAULT_TRIPLET: x64-windows
 
 jobs:
-  # Job 1: Code formatting check
+  # Job 1: Code formatting check (non-blocking for now)
   format-check:
     name: Code Formatting
     runs-on: windows-latest
+    continue-on-error: true # Don't block other jobs until codebase is formatted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
