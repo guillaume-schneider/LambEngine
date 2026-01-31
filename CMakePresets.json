@@ -28,6 +28,19 @@
         "CMAKE_BUILD_TYPE": "Release",
         "BUILD_TESTS": "OFF"
       }
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "debug",
+      "description": "Debug build for CI/CD with compile commands export",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "ci-release",
+      "inherits": "release",
+      "description": "Release build for CI/CD"
     }
   ]
 }

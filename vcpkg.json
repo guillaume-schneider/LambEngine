@@ -7,10 +7,21 @@
     "glm",
     {
       "name": "imgui",
-      "features": ["docking-experimental", "opengl3-binding", "sdl2-binding", "win32-binding"]
+      "features": [
+        "docking-experimental",
+        "opengl3-binding",
+        "sdl2-binding",
+        "win32-binding"
+      ]
     },
     "gtest",
     "nlohmann-json",
     "stb"
+  ],
+  "overrides": [
+    {
+      "name": "imgui",
+      "version": "1.91.0"
+    }
   ]
 }

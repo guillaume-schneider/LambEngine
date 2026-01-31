@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_DEFAULT_TRIPLET: x64-windows
+
+jobs:
+  # Job 1: Code formatting check
+  format-check:
+    name: Code Formatting
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install LLVM/Clang tools
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "17"
+
+      - name: Check formatting with clang-format
+        run: |
+          $hasErrors = $false
+          $files = Get-ChildItem -Path src, tests -Recurse -Include *.cpp, *.hpp -ErrorAction SilentlyContinue
+          foreach ($file in $files) {
+            $output = & clang-format --style=file --dry-run --Werror $file.FullName 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::error file=$($file.FullName)::Formatting issue detected"
+              $hasErrors = $true
+            }
+          }
+          if ($hasErrors) {
+            Write-Host "::error::Code formatting issues found. Run 'clang-format -i' to fix."
+            exit 1
+          }
+          Write-Host "All files are properly formatted."
+        shell: pwsh
+
+  # Job 2: Build (Debug + Release matrix)
+  build:
+    name: Build (${{ matrix.build_type }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+        include:
+          - build_type: Debug
+            preset: debug
+          - build_type: Release
+            preset: release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Export GitHub Actions cache variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "6d7bf7ef2193e2d1c5798a5ff8811d533104c861"
+          runVcpkgInstall: false
+
+      - name: Configure CMake
+        run: cmake --preset ${{ matrix.preset }}
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.build_type }}
+          path: build/bin/${{ matrix.build_type }}/
+          retention-days: 7
+
+  # Job 3: Run tests (depends on Debug build)
+  test:
+    name: Run Tests
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Export GitHub Actions cache variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "6d7bf7ef2193e2d1c5798a5ff8811d533104c861"
+          runVcpkgInstall: false
+
+      - name: Configure and Build with Tests
+        run: |
+          cmake --preset debug
+          cmake --build build --config Debug --parallel
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+      - name: Run Tests
+        run: ctest --test-dir build -C Debug --output-on-failure --verbose
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            build/Testing/
+            build/**/*.xml
+          retention-days: 7
+
+  # Job 4: Package release artifacts (only on main branch)
+  package:
+    name: Package Release
+    runs-on: windows-latest
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Release build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-Release
+          path: package/bin
+
+      - name: Bundle runtime assets
+        run: |
+          mkdir -p package/LambEngine
+          cp -r package/bin/* package/LambEngine/
+          cp -r shaders package/LambEngine/
+          cp -r res package/LambEngine/
+          cp -r config package/LambEngine/
+          [ -f LICENSE ] && cp LICENSE package/LambEngine/
+          [ -f README.md ] && cp README.md package/LambEngine/
+        shell: bash
+
+      - name: Create archive
+        run: |
+          cd package
+          7z a -tzip ../LambEngine-${{ github.sha }}.zip LambEngine/
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: LambEngine-package
+          path: LambEngine-*.zip
+          retention-days: 30

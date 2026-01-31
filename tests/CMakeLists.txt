@@ -1,29 +1,50 @@
-# tests/CMakeLists.txt
-
 cmake_minimum_required(VERSION 3.23)
 
-# Add the main project's include directories so the tests can find the headers
-include_directories(${CMAKE_SOURCE_DIR}/includes)
-include_directories(${CMAKE_SOURCE_DIR}/src)
+find_package(GTest CONFIG REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(assimp CONFIG REQUIRED)
+find_package(Stb REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
-# Add the source files for the tests
-file(GLOB TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/*.cpp")
+# Get source files from the main project (excluding main.cpp)
+file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
-if (TEST_SOURCES)
-    find_package(GTest CONFIG REQUIRED)
+# Test sources
+set(TEST_SOURCES
+    "${CMAKE_SOURCE_DIR}/tests/MinimalTest.cpp"
+    "${CMAKE_SOURCE_DIR}/tests/ActionTest.cpp"
+    "${CMAKE_SOURCE_DIR}/tests/InputHandlerFactoryTest.cpp"
+    "${CMAKE_SOURCE_DIR}/tests/InputSystemTest.cpp"
+    "${CMAKE_SOURCE_DIR}/tests/stb_impl.cpp"
+)
 
-    # Create the tests executable
-    add_executable(Tests ${TEST_SOURCES})
+# Create the tests executable with custom main
+add_executable(LambEngineTests ${TEST_SOURCES} ${ENGINE_SOURCES})
 
-    # Link the necessary libraries to the tests executable
-    target_link_libraries(Tests PRIVATE
-        GTest::gtest
-        GTest::gtest_main
-        GTest::gmock
-        GTest::gmock_main
-    )
+# Include directories
+target_include_directories(LambEngineTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${SRC_SUBDIRS}
+    ${Stb_INCLUDE_DIR}
+)
 
-    add_test(NAME AllTests COMMAND Tests)
-else()
-    message(STATUS "No test files found in the 'tests' directory.")
-endif()
+# Link libraries - use gtest without gtest_main, we'll provide our own main
+target_link_libraries(LambEngineTests PRIVATE
+    GTest::gtest
+    GTest::gmock
+    SDL2::SDL2
+    glad::glad
+    OpenGL::GL
+    assimp::assimp
+    glm::glm
+    imgui::imgui
+    nlohmann_json::nlohmann_json
+)
+
+# Register tests
+add_test(NAME AllTests COMMAND LambEngineTests)

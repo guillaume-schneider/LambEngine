@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g., v1.0.0)"
+        required: true
+        type: string
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_DEFAULT_TRIPLET: x64-windows
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Export GitHub Actions cache variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "6d7bf7ef2193e2d1c5798a5ff8811d533104c861"
+          runVcpkgInstall: false
+
+      - name: Configure CMake (Release)
+        run: cmake --preset release
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+      - name: Build Release
+        run: cmake --build build --config Release --parallel
+
+      - name: Prepare release package
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PACKAGE_DIR="LambEngine-${VERSION}-windows-x64"
+
+          mkdir -p "release/${PACKAGE_DIR}"
+
+          # Copy executable and DLLs
+          cp build/bin/Release/*.exe "release/${PACKAGE_DIR}/" || true
+          cp build/bin/Release/*.dll "release/${PACKAGE_DIR}/" 2>/dev/null || true
+
+          # Copy runtime assets
+          cp -r shaders "release/${PACKAGE_DIR}/"
+          cp -r res "release/${PACKAGE_DIR}/"
+          cp -r config "release/${PACKAGE_DIR}/"
+
+          # Copy documentation
+          [ -f LICENSE ] && cp LICENSE "release/${PACKAGE_DIR}/"
+          [ -f README.md ] && cp README.md "release/${PACKAGE_DIR}/"
+
+          # Create archive
+          cd release
+          7z a -tzip "../LambEngine-${VERSION}-windows-x64.zip" "${PACKAGE_DIR}/"
+        shell: bash
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: LambEngine ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, '-alpha') || contains(steps.version.outputs.VERSION, '-beta') || contains(steps.version.outputs.VERSION, '-rc') }}
+          files: |
+            LambEngine-${{ steps.version.outputs.VERSION }}-windows-x64.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

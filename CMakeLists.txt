@@ -9,7 +9,28 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Export compile commands for clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 file(GLOB_RECURSE SOURCES "src/*.cpp")
+
+# Function to get all subdirectories recursively
+function(get_subdirectories result dir)
+    file(GLOB children ${dir}/*)
+    set(subdirs "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${child})
+            list(APPEND subdirs ${child})
+            # Recursively get subdirectories
+            get_subdirectories(subsubdirs ${child})
+            list(APPEND subdirs ${subsubdirs})
+        endif()
+    endforeach()
+    set(${result} ${subdirs} PARENT_SCOPE)
+endfunction()
+
+# Collect all subdirectories in `src` (must be before add_subdirectory for tests)
+get_subdirectories(SRC_SUBDIRS "${CMAKE_SOURCE_DIR}/src")
 
 # Debug: Print all discovered subdirectories (optional)
 message(STATUS "All subdirectories in 'src': ${SRC_SUBDIRS}")
@@ -42,32 +63,14 @@ endif()
 # Add test-related subdirectory if BUILD_TESTS is ON
 if (BUILD_TESTS)
     message(STATUS "Building in development mode with tests.")
-    # TODO: debug unit tests
-    # enable_testing()
-    # add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 else()
     message(STATUS "Building in production mode (no tests).")
 endif()
 
 # Main executable target
 add_executable(${PROJECT_NAME} ${SOURCES})
-
-function(get_subdirectories result dir)
-    file(GLOB children ${dir}/*)
-    set(subdirs "")
-    foreach(child ${children})
-        if(IS_DIRECTORY ${child})
-            list(APPEND subdirs ${child})
-            # Recursively get subdirectories
-            get_subdirectories(subsubdirs ${child})
-            list(APPEND subdirs ${subsubdirs})
-        endif()
-    endforeach()
-    set(${result} ${subdirs} PARENT_SCOPE)
-endfunction()
-
-# Collect all subdirectories in `src`
-get_subdirectories(SRC_SUBDIRS "${CMAKE_SOURCE_DIR}/src")
 
 # Include directories for the main project
 target_include_directories(${PROJECT_NAME} PRIVATE ${SRC_SUBDIRS})
